@@ -10,6 +10,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Kismet/GameplayStatics.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -141,10 +142,15 @@ void AFT_SprintCharacter::Look(const FInputActionValue& Value)
 /** Connah methods implementation */
 void AFT_SprintCharacter::SprintStart(const FInputActionValue& Value)
 {
-	// we could set speeds, but i like scalers 
-	GetCharacterMovement()->MaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed * 2;
-	// make it so they have a speed up route
-	GetCharacterMovement()->MinAnalogWalkSpeed = GetCharacterMovement()->MinAnalogWalkSpeed * 3;
+	isSprinting = true;
+	
+	if (stamina > 0) {
+		// we could set speeds, but i like scalers 
+		GetCharacterMovement()->MaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed * 2;
+		// make it so they have a speed up route
+		GetCharacterMovement()->MinAnalogWalkSpeed = GetCharacterMovement()->MinAnalogWalkSpeed * 3;
+	}
+	
 }
 
 void AFT_SprintCharacter::SprintStop(const FInputActionValue& Value)
@@ -152,4 +158,19 @@ void AFT_SprintCharacter::SprintStop(const FInputActionValue& Value)
 	// Reset the speeds
 	GetCharacterMovement()->MaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed / 2;
 	GetCharacterMovement()->MinAnalogWalkSpeed = GetCharacterMovement()->MinAnalogWalkSpeed / 3;
+	isSprinting = false;
+}
+
+void AFT_SprintCharacter::Tick(float deltaTime) 
+{
+	if (isSprinting && stamina > 0) {
+		stamina -= 1 * deltaTime;
+		UE_LOG(LogTemp, Warning, TEXT("Stamina: %f"), stamina);
+		if (stamina < 0) {
+			SprintStop(FInputActionValue{});
+		}	
+	}
+	else if(!isSprinting && stamina <= 100) {
+		stamina += deltaTime;
+	}
 }
